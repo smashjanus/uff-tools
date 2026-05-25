@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Start.gg Self Reporting Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e1e1e;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.08);
+    }
+
+    input {
+      padding: 12px;
+      margin: 10px;
+      width: 250px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .match-card {
+      padding: 15px;
+      border-radius: 10px;
+      margin: 12px 0;
+      text-align: left;
+    }
+
+    .blue {
+      background: #1565c0;
+    }
+
+    .green {
+      background: #2e7d32;
+    }
+
+    .red {
+      background: #c62828;
+    }
+
+    .gray {
+      background: #424242;
+    }
+
+    h1, h2 {
+      margin-bottom: 20px;
+    }
+
+    .error {
+      color: #ff5252;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- LOGIN PAGE -->
+  <div id="loginPage" class="card">
+    <h1>Self Reporting Tool</h1>
+    <p>Login with your assigned credentials</p>
+    <input type="text" id="username" placeholder="Username">
+    <br>
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button onclick="login()">Login</button>
+    <p id="loginError" class="error"></p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboardPage" class="hidden">
+    <div class="card">
+      <h2>Welcome, <span id="playerName"></span></h2>
+      <p>Your Current Matches</p>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div id="matchesContainer"></div>
+  </div>
+
+</div>
+
+<script>
+  // HARDCODED LOGIN
+  const users = {
+    "20625994": {
+      password: "20625994",
+      entrantId: 20625994,
+      gamerTag: "KokiQZD"
+    }
+  };
+
+  const API_URL = "https://api.start.gg/gql/alpha";
+  const API_TOKEN = "90543f442008272ab71852e449e94e61";
+  const EVENT_ID = 1414455;
+
+  let currentUser = null;
+
+  function login() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const error = document.getElementById("loginError");
+
+    if (users[username] && users[username].password === password) {
+      currentUser = users[username];
+
+      document.getElementById("loginPage").classList.add("hidden");
+      document.getElementById("dashboardPage").classList.remove("hidden");
+      document.getElementById("playerName").innerText = currentUser.gamerTag;
+
+      loadMatches();
+    } else {
+      error.innerText = "Invalid username or password.";
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById("dashboardPage").classList.add("hidden");
+    document.getElementById("loginPage").classList.remove("hidden");
+    document.getElementById("matchesContainer").innerHTML = "";
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+  }
+
+  async function loadMatches() {
+    const query = `
+      query EventSets($eventId: ID!, $page: Int!) {
+        event(id: $eventId) {
+          id
+          name
+          sets(page: $page, perPage: 50) {
+            pageInfo {
+              totalPages
+            }
+            nodes {
+              id
+              fullRoundText
+              state
+              displayScore
+              winnerId
+              completedAt
+              slots {
+                entrant {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_TOKEN}`
+        },
+        body: JSON.stringify({
+          query,
+          variables: {
+            eventId: EVENT_ID,
+            page: 1
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      const sets = data.data.event.sets.nodes;
+
+      const playerMatches = sets.filter(set =>
+        set.slots &&
+        set.slots.some(slot =>
+          slot.entrant && Number(slot.entrant.id) === currentUser.entrantId
+        )
+      );
+
+      renderMatches(playerMatches);
+
+    } catch (err) {
+      document.getElementById("matchesContainer").innerHTML =
+        `<div class="card error">Failed to load matches.</div>`;
+      console.error(err);
+    }
+  }
+
+  function renderMatches(matches) {
+    const container = document.getElementById("matchesContainer");
+    container.innerHTML = "";
+
+    if (matches.length === 0) {
+      container.innerHTML = `<div class="card">No matches found.</div>`;
+      return;
+    }
+
+    matches.forEach(match => {
+      const userSlot = match.slots.find(slot =>
+        slot.entrant && Number(slot.entrant.id) === currentUser.entrantId
+      );
+
+      const opponentSlot = match.slots.find(slot =>
+        slot.entrant && Number(slot.entrant.id) !== currentUser.entrantId
+      );
+
+      let statusClass = "gray";
+      let statusText = "Pending";
+
+      if (match.winnerId) {
+        if (Number(match.winnerId) === currentUser.entrantId) {
+          statusClass = "green";
+          statusText = "You Won";
+        } else {
+          statusClass = "red";
+          statusText = "You Lost";
+        }
+      } else if (opponentSlot) {
+        statusClass = "blue";
+        statusText = "Active Match";
+      }
+
+      container.innerHTML += `
+        <div class="match-card ${statusClass}">
+          <h3>${match.fullRoundText}</h3>
+          <p><strong>You:</strong> ${userSlot?.entrant?.name || "Unknown"}</p>
+          <p><strong>Opponent:</strong> ${opponentSlot?.entrant?.name || "TBD"}</p>
+          <p><strong>Status:</strong> ${statusText}</p>
+          <p><strong>Set ID:</strong> ${match.id}</p>
+        </div>
+      `;
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#09090b">
+    <meta name="description" content="Smash Janus - herramienta para torneos de Super Smash Bros. Ultimate.">
+    <title>Smash Janus</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/stages.js" defer></script>
+    <script src="js/match-wizard.js" defer></script>
+    <script src="js/player-dashboard.js" defer></script>
+    <script src="js/admin-dashboard.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Smash Janus app">
+      <button id="logout-button" class="logout-button hidden" type="button">
+        Salir
+      </button>
+
+      <section id="login-view" class="view" aria-labelledby="login-title">
+        <div class="brand">
+          <p class="eyebrow">Smash Janus</p>
+          <h1 id="login-title">Ultimate Fight Fiesta</h1>
+          <p class="lede">Reporta tus partidas desde tu teléfono!</p>
+        </div>
+
+        <button id="startgg-login-button" class="button button-primary" type="button">
+          Inicia sesión en Start.gg
+        </button>
+      </section>
+
+      <section id="player-dashboard-view" class="view hidden dashboard-view" aria-labelledby="player-dashboard-title">
+        <header class="dashboard-header">
+          <p class="eyebrow">Panel de Jugador</p>
+          <div class="title-row">
+            <h1 id="player-dashboard-title">
+              <span id="player-gamertag">Player</span>
+            </h1>
+            <button id="reload-player-matches-button" class="icon-button" type="button" aria-label="Reload matches" title="Reload matches">
+              ↻
+            </button>
+          </div>
+          <p id="player-event-name" class="lede">Active event</p>
+        </header>
+
+        <div id="dashboard-actions" class="dashboard-actions hidden">
+          <button id="open-admin-dashboard-button" class="button button-secondary" type="button">
+            Admin approval
+          </button>
+        </div>
+
+        <div id="upcoming-matches-container" class="match-list" aria-live="polite"></div>
+      </section>
+
+      <section id="admin-dashboard-view" class="view hidden dashboard-view" aria-labelledby="admin-dashboard-title">
+        <header class="dashboard-header">
+          <button id="back-to-player-dashboard-button" class="button button-secondary" type="button">
+            Regresar a las partidas
+          </button>
+          <p class="eyebrow">Organizador</p>
+          <div class="title-row">
+            <h1 id="admin-dashboard-title">Admin Page</h1>
+            <button id="reload-admin-reports-button" class="icon-button" type="button" aria-label="Recargar admin" title="Recargar admin">
+              ↻
+            </button>
+          </div>
+          <p class="lede">Monitorear sets en juego y revisar reportes pendientes...</p>
+        </header>
+
+        <section class="admin-section" aria-labelledby="admin-started-sets-title">
+          <div class="admin-section-header">
+            <div>
+              <p class="eyebrow">En juego</p>
+              <h2 id="admin-started-sets-title">Sets empezados</h2>
+            </div>
+          </div>
+          <div id="admin-started-sets-container" class="match-list" aria-live="polite"></div>
+        </section>
+
+        <section class="admin-section" aria-labelledby="admin-reports-title">
+          <div class="admin-section-header">
+            <div>
+              <p class="eyebrow">Reportes</p>
+              <h2 id="admin-reports-title">Pendientes de aprobar</h2>
+            </div>
+          </div>
+          <div id="admin-reports-container" class="match-list" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section id="match-wizard-view" class="view hidden match-wizard-view" aria-labelledby="match-wizard-title">
+        <div id="match-wizard-container" aria-live="polite"></div>
+      </section>
+    </main>
+  </body>
+</html>

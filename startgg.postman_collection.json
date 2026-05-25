@@ -1,0 +1,233 @@
+{
+  "info": {
+    "_postman_id": "e9abb600-2e9e-432a-8b40-51f322443fa4",
+    "name": "startgg",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46569353",
+    "_collection_link": "https://go.postman.co/collection/46569353-e9abb600-2e9e-432a-8b40-51f322443fa4?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "https://api.start.gg/gql/alpha",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer 8bc180bb0d769c448621b6145e70830b"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query { event(id:1414455) { sets(perPage:100) { nodes { id fullRoundText state slots { entrant { id name } } } } } }",
+            "variables": ""
+          }
+        },
+        "url": {
+          "raw": "https://api.start.gg/gql/alpha",
+          "protocol": "https",
+          "host": [
+            "api",
+            "start",
+            "gg"
+          ],
+          "path": [
+            "gql",
+            "alpha"
+          ]
+        },
+        "description": "Generated from cURL: curl -X POST https://api.start.gg/gql/alpha \\\r\n  -H \"Authorization: Bearer 8bc180bb0d769c448621b6145e70830b\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\"query\":\"query { event(id:1414455) { sets(perPage:100) { nodes { id fullRoundText state slots { entrant { id name } } } } } }\"}'\r\n"
+      },
+      "response": []
+    },
+    {
+      "name": "get game id",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer 8bc180bb0d769c448621b6145e70830b"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query GetVideogameId { videogames(query: { filter: { name: \"Super Smash Bros. Ultimate\" } }) { nodes { id name characters { id name } } } }",
+            "variables": ""
+          }
+        },
+        "url": {
+          "raw": "https://api.start.gg/gql/alpha",
+          "protocol": "https",
+          "host": [
+            "api",
+            "start",
+            "gg"
+          ],
+          "path": [
+            "gql",
+            "alpha"
+          ]
+        },
+        "description": "Generated from cURL: curl -X POST https://api.start.gg/gql/alpha \\\r\n  -H \"Authorization: Bearer 8bc180bb0d769c448621b6145e70830b\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\"query\":\"query GetVideogameId { videogames(query: { filter: { name: \\\"Super Smash Bros. Ultimate\\\" } }) { nodes { id name characters { id name } } } }\"}'\r\n"
+      },
+      "response": []
+    },
+    {
+      "name": "Get User Data",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer 90543f442008272ab71852e449e94e61"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"query GetUser($slug: String!) { user(slug: $slug) { id discriminator player { id gamerTag } } }\",\n  \"variables\": {\n    \"slug\": \"2b7fdffa\"\n  }\n}"
+        },
+        "url": {
+          "raw": "https://api.start.gg/gql/alpha",
+          "protocol": "https",
+          "host": [
+            "api",
+            "start",
+            "gg"
+          ],
+          "path": [
+            "gql",
+            "alpha"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Tourneys by User Id",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer 47ee414952d496b7de948f379e618ad2"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"query TournamentsByOwner($ownerId: ID!, $perPage: Int!) { tournaments(query: { perPage: $perPage, filter: { ownerId: $ownerId } }) { nodes { id name slug startAt endAt isOnline city addrState countryCode numAttendees } } }\",\n  \"variables\": {\n    \"ownerId\": 1107046,\n    \"perPage\": 100\n  }\n}"
+        },
+        "url": {
+          "raw": "https://api.start.gg/gql/alpha",
+          "protocol": "https",
+          "host": [
+            "api",
+            "start",
+            "gg"
+          ],
+          "path": [
+            "gql",
+            "alpha"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Events by Tournament Id",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer 90543f442008272ab71852e449e94e61"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"query TournamentEvents($tournamentId: ID!) { tournament(id: $tournamentId) { id name events { id name slug numEntrants } } }\",\n  \"variables\": {\n    \"tournamentId\": 806865\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://api.start.gg/gql/alpha",
+          "protocol": "https",
+          "host": [
+            "api",
+            "start",
+            "gg"
+          ],
+          "path": [
+            "gql",
+            "alpha"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Attendees by Event Id",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer 90543f442008272ab71852e449e94e61"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"query EventEntrants($eventId: ID!, $page: Int!) { event(id: $eventId) { id name entrants(query: { page: $page, perPage: 50 }) { pageInfo { totalPages } nodes { id name participants { player { id gamerTag } } } } } }\",\n  \"variables\": {\n    \"eventId\": 1414455,\n    \"page\": 1\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://api.start.gg/gql/alpha",
+          "protocol": "https",
+          "host": [
+            "api",
+            "start",
+            "gg"
+          ],
+          "path": [
+            "gql",
+            "alpha"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
