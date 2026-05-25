@@ -1,5 +1,5 @@
 const START_GG_CLIENT_ID = '281';
-const START_GG_REDIRECT_URI = 'http://127.0.0.1:5500/';
+const START_GG_REDIRECT_URI = 'https://smashjanus.github.io/uff-tools/';
 const START_GG_AUTH_URL = 'https://start.gg/oauth/authorize';
 const START_GG_AUTH_SCOPES = ['user.identity', 'tournament.reporter'];
 const SMASH_JANUS_SESSION_KEY = 'smashJanus.startgg.sessionId';
