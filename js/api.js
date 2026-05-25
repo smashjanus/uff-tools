@@ -1,4 +1,4 @@
-const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyWuroFP51vC0ySGDq2BdIMySmo3WelWLRL-8VM9CuIsrPMjh91ngYx4qv4U87BRVQOug/exec';
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxeFxtcIBX6Ylqe61rBabiKbLJ7q6UGI6u2yf3-wFnFF9Qw9dg8zhdAJynTDUS-DYy4Aw/exec';
 
 async function gasRequest(action, payload = {}) {
   if (!GAS_WEB_APP_URL) {
