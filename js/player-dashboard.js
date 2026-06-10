@@ -1,4 +1,4 @@
-const PLAYER_DASHBOARD_EVENT_ID = '1414455';
+const PLAYER_DASHBOARD_EVENT_ID = '1633341';
 const PLAYER_DASHBOARD_TEST_ENTRANT_ID = '';
 const PLAYER_DASHBOARD_VISIBLE_SET_STATES = new Set([1, 2]);
 const PLAYER_REPORT_PENDING_MESSAGE = 'Esta partida ya fue reportada y está pendiente de aprobación. Avísale al organizador para que sea aprobado el resultado.';
