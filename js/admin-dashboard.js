@@ -1,4 +1,4 @@
-const ADMIN_DASHBOARD_EVENT_ID = '1414455';
+const ADMIN_DASHBOARD_EVENT_ID = '1633341';
 const ADMIN_STARTED_SET_STATE = 2;
 
 document.addEventListener('DOMContentLoaded', () => {
