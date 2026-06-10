@@ -96,6 +96,7 @@ async function loadAdminStartedSets() {
       eventId: ADMIN_DASHBOARD_EVENT_ID,
       perPage: 100
     });
+    setAdminEventName(response.event?.name || 'Evento');
     renderAdminStartedSets(response.event?.sets?.nodes || []);
   } catch (error) {
     container.innerHTML = `<p class="dashboard-status">${escapeAdminHtml(formatAdminError(error, 'No se pudieron cargar los sets empezados.'))}</p>`;
@@ -105,6 +106,14 @@ async function loadAdminStartedSets() {
 function loadAdminDashboard() {
   loadAdminStartedSets();
   loadAdminReports();
+}
+
+function setAdminEventName(eventName) {
+  const element = document.getElementById('admin-event-name');
+
+  if (element) {
+    element.textContent = eventName;
+  }
 }
 
 function renderAdminReports(reports) {
