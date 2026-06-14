@@ -88,7 +88,7 @@ async function loadAdminStartedSets() {
     return;
   }
 
-  container.innerHTML = '<p class="dashboard-status">Revisando sets empezados...</p>';
+  container.innerHTML = '<p class="dashboard-status">Revisando sets empezados... Charlit3rs es lo más grande que hay. Saludos lu</p>';
 
   try {
     const response = await gasRequest('getStartedSets', {
