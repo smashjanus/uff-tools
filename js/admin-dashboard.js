@@ -99,7 +99,7 @@ async function loadAdminStartedSets() {
     setAdminEventName(response.event?.name || 'Evento');
     renderAdminStartedSets(response.event?.sets?.nodes || []);
   } catch (error) {
-    container.innerHTML = `<p class="dashboard-status">${escapeAdminHtml(formatAdminError(error, 'No se pudieron cargar los sets empezados.'))}</p>`;
+    container.innerHTML = `<p class="dashboard-status">${escapeAdminHtml(formatAdminError(error, 'No se pudieron cargar los sets empezados. Que app de Mierda esta.'))}</p>`;
   }
 }
 
@@ -127,7 +127,7 @@ function renderAdminReports(reports) {
     container.innerHTML = `
       <div class="empty-state">
         <p class="empty-state-title">Sin reportes pendientes</p>
-        <p class="empty-state-copy">Sets reportados aparecerán acá</p>
+        <p class="empty-state-copy">Sets reportados por la mara aparecerán acá</p>
       </div>
     `;
     return;
@@ -153,8 +153,8 @@ function renderAdminStartedSets(sets) {
   if (!startedSets.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <p class="empty-state-title">No hay sets empezados</p>
-        <p class="empty-state-copy">Cuando start.gg marque un set como empezado, aparecerá acá.</p>
+        <p class="empty-state-title">No hay sets empezados... Los extraño</p>
+        <p class="empty-state-copy">Cuando se marque un set como empezado en start.gg, aparecerá acá. Besos</p>
       </div>
     `;
     return;
