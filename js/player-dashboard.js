@@ -168,8 +168,8 @@ function renderUpcomingMatches(matches, user) {
     playerDashboardSetsById.clear();
     container.innerHTML = `
       <div class="empty-state">
-        <p class="empty-state-title">No hay pertidas por ahora.</p>
-        <p class="empty-state-copy">Tus sets pendientes aparecerán acá</p>
+        <p class="empty-state-title">It's quiet... too quiet.</p>
+        <p class="empty-state-copy">Tus partidas iniciadas aparecerán acá. Cualquier duda, acércate a alguien del staff.</p>
       </div>
     `;
     return;
@@ -277,7 +277,7 @@ function setDashboardLoading(isLoading) {
   const container = document.getElementById('upcoming-matches-container');
 
   if (isLoading && container) {
-    container.innerHTML = '<p class="dashboard-status">Loading your matches...</p>';
+    container.innerHTML = '<p class="dashboard-status">Cargando... Dale un beso a Charlit3rs mientras esperas.</p>';
   }
 }
 
