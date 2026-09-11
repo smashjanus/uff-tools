@@ -1,0 +1,5 @@
+data/
+artifacts/
+.env
+node_modules/
+dist/
