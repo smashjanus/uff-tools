@@ -1,11 +1,18 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f3ef"><meta name="description" content="Salamandra Queue: el orden de tu torneo, tu próxima partida y tu estación.">
-  <title>Salamandra Queue · El siguiente set</title>
-  <link rel="icon" href="./logo.jpeg" type="image/jpeg"><link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./app.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f0e6">
+  <meta name="description" content="Consulta el orden público de partidas, llamados y estaciones de Salamandra.">
+  <title>Salamandra Queue · Orden de partidas</title>
+  <link rel="icon" href="./logo.jpeg" type="image/jpeg">
+  <link rel="stylesheet" href="./public-styles.css">
+  <script type="module" src="./public-app.js"></script>
 </head>
-<body><div id="app"><div class="boot">Preparando el siguiente set…</div></div><div id="modal-root"></div><div id="toast" role="status" aria-live="polite"></div><noscript>Activa JavaScript para consultar el orden de las partidas.</noscript></body>
+<body>
+  <div id="app"><div class="boot">Consultando el orden de partidas…</div></div>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <noscript>Activa JavaScript para consultar el orden de las partidas.</noscript>
+</body>
 </html>
