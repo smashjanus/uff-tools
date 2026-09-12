@@ -42,9 +42,9 @@ export function createPublicSource(eventId,phaseId=null,fetcher=fetch){
     }
     throw failure;
   }
-  return {async read(){
+  return {async read(force=false){
     if(pending)return pending;
-    if(snapshot&&Date.now()-lastAttempt<15000)return snapshot;
+    if(!force&&snapshot&&Date.now()-lastAttempt<15000)return snapshot;
     lastAttempt=Date.now();
     pending=(async()=>{
       try{
