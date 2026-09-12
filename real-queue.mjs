@@ -1,15 +1,25 @@
 const range=(from,to)=>Array.from({length:to-from+1},(_,index)=>from+index);
 const logicalId=(poolId,number)=>`${poolId}:station:${number}`;
 const poolUsesStations=(state,pool)=>state.sets.some(set=>set.pool===pool.id&&!set.preview&&!['completed','bye'].includes(set.status))||(!state.sets.some(set=>!set.preview)&&pool.count>0);
+const readyForStation=(state,set)=>{
+  if(!set||set.preview||set.blocked||!['pending','called','playing'].includes(set.status))return false;
+  if(['called','playing'].includes(set.status)||!Array.isArray(set.players))return true;
+  if(!set.players[0]||!set.players[1])return false;
+  return (set.inputs||[]).every(input=>!input.setId||state.sets.some(parent=>parent.id===input.setId&&['completed','bye'].includes(parent.status)));
+};
+const activePools=state=>{
+  const ready=state.pools.filter(pool=>state.sets.some(set=>set.pool===pool.id&&readyForStation(state,set)));
+  return ready.length?ready:state.pools.filter(pool=>poolUsesStations(state,pool));
+};
 
 export function stationNumbersForPool(state,pool){
   const name=String(pool?.name||'');
+  const active=activePools(state),index=active.findIndex(candidate=>candidate.id===pool.id);
+  if(index<0)return [];
+  if(active.length===1)return range(1,12);
   if(/\bPool\s*A\d*\b/i.test(name))return range(1,6);
   if(/\bPool\s*B\d*\b/i.test(name))return range(7,12);
-  if(/top\s*\d+|final/i.test(name))return range(1,12);
-  const active=state.pools.filter(candidate=>poolUsesStations(state,candidate));
-  const index=active.findIndex(candidate=>candidate.id===pool.id);
-  if(active.length===1||index===0)return range(1,6);
+  if(index===0)return range(1,6);
   if(index===1)return range(7,12);
   return [];
 }
@@ -38,7 +48,8 @@ export function decorateRealResult(result,overlays=new Map(),now=Date.now()){
   for(const [key,overlay] of overlays){
     if(String(overlay.eventId)!==String(state.eventId))continue;
     const set=state.sets.find(candidate=>candidate.id===overlay.setId);
-    if(!set||['completed','bye'].includes(set.status)||now-overlay.updatedAt>3*60*60000){overlays.delete(key);continue;}
+    if(!set||['completed','bye'].includes(set.status)||now-overlay.updatedAt>90000){overlays.delete(key);continue;}
+    if(set.status===overlay.status&&set.stationNumber===overlay.stationNumber){overlays.delete(key);continue;}
     if(set.status==='playing'&&overlay.status==='called'){overlays.delete(key);continue;}
     const station=state.stations.find(candidate=>candidate.pool===set.pool&&candidate.number===overlay.stationNumber);
     if(!station)continue;
