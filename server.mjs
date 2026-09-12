@@ -137,7 +137,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{message:'Método no permitido.'});
     const publicFiles={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/core.js':'core.js','/transport.js':'transport.js','/config.js':'config.js','/styles.css':'styles.css','/favicon.svg':'favicon.svg','/logo.jpeg':'logo.jpeg','/logo1.jpeg':'logo1.jpeg','/logo2.jpeg':'logo2.jpeg','/logo3.jpeg':'logo3.jpeg'};
     const file=publicFiles[url.pathname];if(!file)return json(res,404,{message:'Página no encontrada.'});
-    if(file==='config.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(`export const CONFIG = ${JSON.stringify({name:'Salamandra Queue',mode:'demo',apiBase:'/api',refreshMs:15000,oauthEnabled:oauth.enabled})};`);}
+    if(file==='config.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(`export const CONFIG = ${JSON.stringify({name:'Salamandra Queue',mode:'node',backend:'node',apiBase:'/api',refreshMs:15000,oauthEnabled:oauth.enabled})};`);}
     const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.jpeg':'image/jpeg'};
     res.writeHead(200,{'Content-Type':types[path.extname(file)]+'; charset=utf-8','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:await readFile(path.join(root,file)));
   }catch(e){if(!res.headersSent)json(res,400,{message:e.message||'No se pudo completar la solicitud.'});else res.end();}
