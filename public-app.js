@@ -8,18 +8,31 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&
 const refreshIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg>`;
 
 let state=null;
-let selectedPool='all';
+let selectedPool='general';
 let tab='upcoming';
 let entries=[];
 let lastSync=0;
 let syncing=false;
 let syncError='';
 let refreshTimer=null;
+let rosterPool=null;
+let rosterSearch='';
 
 const eventTitle=()=>state?.eventName||state?.name?.split(' · ').at(-1)||'Salamandra Queue';
 const poolName=id=>state?.pools.find(pool=>pool.id===id)?.name||id;
-const selectedPools=()=>state.pools.filter(pool=>selectedPool==='all'||pool.id===selectedPool);
 const pad=number=>String(number).padStart(2,'0');
+
+function poolCode(pool){
+  if(/top\s*8/i.test(pool?.name||''))return 'TOP8';
+  return (pool?.name||'').match(/\bpool\s*([ab])\d*\b/i)?.[1]?.toUpperCase()||null;
+}
+
+function orderedPools(){
+  const rank={A:0,B:1,TOP8:2};
+  return [...(state?.pools||[])].sort((a,b)=>(rank[poolCode(a)]??3)-(rank[poolCode(b)]??3)||a.name.localeCompare(b.name,'es',{numeric:true}));
+}
+
+const selectedPools=()=>orderedPools().filter(pool=>selectedPool==='general'||pool.id===selectedPool);
 
 function stationNumber(set){
   const direct=Number(set?.stationNumber);
@@ -30,9 +43,74 @@ function stationNumber(set){
 }
 
 function poolTabName(pool){
-  if(/top\s*8/i.test(pool.name))return 'Top 8';
+  const code=poolCode(pool);
+  if(code==='TOP8')return 'Top 8';
+  if(code==='A'||code==='B')return `Pool ${code}`;
   const parts=pool.name.split('·').map(part=>part.trim()).filter(Boolean);
   return parts.at(-1)||pool.name;
+}
+
+function poolPlayers(poolId){
+  return state.players
+    .filter(player=>player.pool===poolId||player.pools?.includes(poolId))
+    .sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base',numeric:true}));
+}
+
+function normalized(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es');
+}
+
+function filteredRoster(poolId){
+  const query=normalized(rosterSearch.trim());
+  const players=poolPlayers(poolId);
+  return query?players.filter(player=>normalized(player.name).includes(query)):players;
+}
+
+function rosterResults(pool){
+  const players=filteredRoster(pool.id);
+  return `<div class="roster-summary" id="roster-summary">${players.length} ${players.length===1?'jugador encontrado':'jugadores encontrados'}</div>
+    <ol class="roster-list" id="roster-list">${players.length?players.map((player,index)=>`<li><span>${pad(index+1)}</span><strong>${esc(player.name)}</strong></li>`).join(''):`<li class="roster-empty"><strong>No encontramos ese nombre en ${esc(poolTabName(pool))}</strong><span>Prueba con otra parte del tag.</span></li>`}</ol>`;
+}
+
+function rosterDialog(){
+  if(!rosterPool)return '';
+  const pool=state.pools.find(candidate=>candidate.id===rosterPool);
+  if(!pool)return '';
+  return `<div class="modal-backdrop" data-action="close-roster">
+    <section class="roster-dialog" role="dialog" aria-modal="true" aria-labelledby="roster-title">
+      <div class="roster-header"><div><span>LISTA DE JUGADORES</span><h2 id="roster-title">${esc(poolTabName(pool))}</h2></div><button class="close-button" data-action="close-roster" aria-label="Cerrar lista">×</button></div>
+      <label class="roster-search"><span>Buscar por nombre o tag</span><input id="roster-search" type="search" value="${esc(rosterSearch)}" placeholder="Escribe un nombre…" autocomplete="off"></label>
+      <div id="roster-results">${rosterResults(pool)}</div>
+    </section>
+  </div>`;
+}
+
+function poolOverviewCard(pool){
+  const code=poolCode(pool),schedule=CONFIG.poolSchedules?.[code];
+  if(!schedule)return '';
+  const count=poolPlayers(pool.id).length||pool.count||0;
+  return `<article class="pool-overview-card pool-${code.toLowerCase()}">
+    <div class="pool-card-top"><span>${esc(poolTabName(pool))}</span><strong>${count} jugadores</strong></div>
+    <div class="pool-time"><span>HORARIO DE INICIO</span><strong>${esc(schedule.time)}</strong><small>${esc(schedule.date)}</small></div>
+    <div class="pool-card-actions"><button class="primary-action" data-go-pool="${esc(pool.id)}">Ver partidas</button><button class="secondary-action" data-roster-pool="${esc(pool.id)}">Ver lista de jugadores</button></div>
+  </article>`;
+}
+
+function generalView(){
+  const scheduled=orderedPools().filter(pool=>CONFIG.poolSchedules?.[poolCode(pool)]);
+  return `<section class="welcome-section" aria-labelledby="general-title">
+      <div class="welcome-copy"><span>GUÍA DEL JUGADOR</span><h2 id="general-title">Encuentra tu pool y sigue tu llamado</h2><p>Revisa en qué grupo participas y mantén esta página abierta para saber cuándo debes acercarte a jugar.</p></div>
+      <div class="player-guide">
+        <article><strong>1</strong><div><h3>Busca tu pool</h3><p>Abre la lista de jugadores de Pool A o Pool B y busca tu nombre o tag.</p></div></article>
+        <article><strong>2</strong><div><h3>Revisa el orden</h3><p>En “Ver partidas” encontrarás las partidas en juego, llamadas y las siguientes.</p></div></article>
+        <article><strong>3</strong><div><h3>Atiende la llamada</h3><p>Cuando aparezca <span class="inline-status called">Jugadores llamados</span>, acércate inmediatamente a la estación indicada.</p></div></article>
+        <article><strong>4</strong><div><h3>Confirma la estación</h3><p><span class="inline-status playing">En juego</span> indica que la partida inició. La tarjeta muestra la estación y el tiempo transcurrido.</p></div></article>
+      </div>
+    </section>
+    <section class="pool-schedule-section" aria-labelledby="schedule-title">
+      <div class="section-heading"><div><span>26 DE SEPTIEMBRE</span><h2 id="schedule-title">Horarios por pool</h2></div></div>
+      <div class="pool-overview-grid">${scheduled.map(poolOverviewCard).join('')}</div>
+    </section>`;
 }
 
 function syncText(){
@@ -121,7 +199,6 @@ function matchGroups(){
   const groups=selectedPools().map(pool=>({pool,sets:activeSetsFor(pool.id)})).filter(group=>group.sets.length);
   if(!groups.length)return `<div class="empty"><strong>${tab==='completed'?'Aún no hay partidas finalizadas':'No hay partidas pendientes'}</strong><span>Esta vista se actualizará automáticamente.</span></div>`;
   return groups.map(group=>`<section class="pool-group">
-    ${selectedPool==='all'?`<div class="pool-heading"><strong>${esc(group.pool.name)}</strong><span>${group.sets.length} ${group.sets.length===1?'partida':'partidas'}</span></div>`:''}
     <div class="match-list">${group.sets.map((set,index)=>matchRow(set,index+1)).join('')}</div>
   </section>`).join('');
 }
@@ -129,7 +206,7 @@ function matchGroups(){
 function visibleStations(){
   const poolIds=new Set(selectedPools().map(pool=>pool.id));
   const candidates=state.stations.filter(station=>poolIds.has(station.pool));
-  if(selectedPool!=='all')return candidates.sort((a,b)=>Number(a.number)-Number(b.number));
+  if(selectedPool!=='general')return candidates.sort((a,b)=>Number(a.number)-Number(b.number));
   const occupiedPool=new Map();
   for(const set of state.sets.filter(set=>poolIds.has(set.pool)&&['playing','called'].includes(set.status))){
     const number=stationNumber(set);
@@ -158,14 +235,31 @@ function stationCard(station){
   </article>`;
 }
 
+function poolQueueView(stations){
+  const pool=state.pools.find(candidate=>candidate.id===selectedPool);
+  return `<section class="queue-section" aria-labelledby="queue-title">
+      <div class="section-heading"><div><span>ORDEN ACTUAL</span><h2 id="queue-title">${esc(pool?poolTabName(pool):poolName(selectedPool))}</h2></div>
+        <div class="status-tabs" aria-label="Estado de partidas"><button data-tab="upcoming" class="${tab==='upcoming'?'selected':''}">En juego y próximas</button><button data-tab="completed" class="${tab==='completed'?'selected':''}">Finalizadas</button></div>
+      </div>
+      ${matchGroups()}
+    </section>
+    <section class="stations-section" aria-labelledby="stations-title">
+      <div class="section-heading"><div><span>ESTADO ACTUAL</span><h2 id="stations-title">Estaciones</h2></div><strong class="station-count">${stations.length}</strong></div>
+      <div class="station-grid">${stations.length?stations.map(stationCard).join(''):`<div class="empty"><strong>Sin estaciones para esta pool</strong></div>`}</div>
+    </section>`;
+}
+
 function render(){
   if(!state){
     app.innerHTML=`<main class="boot-screen"><img src="./logo.jpeg" alt="Salamandra" width="54" height="54"><p>${esc(syncError||'Consultando el orden de partidas…')}</p>${syncError?`<button class="refresh-button" data-action="refresh">${refreshIcon}<span>Volver a intentar</span></button>`:''}</main>`;
     return;
   }
-  if(selectedPool!=='all'&&!state.pools.some(pool=>pool.id===selectedPool))selectedPool='all';
+  if(selectedPool!=='general'&&!state.pools.some(pool=>pool.id===selectedPool))selectedPool='general';
+  if(rosterPool&&!state.pools.some(pool=>pool.id===rosterPool)){rosterPool=null;rosterSearch='';}
   entries=schedule(state);
-  const stations=visibleStations();
+  const pools=orderedPools();
+  const stations=selectedPool==='general'?[]:visibleStations();
+  document.body.classList.toggle('modal-open',Boolean(rosterPool));
   app.innerHTML=`<div class="public-shell">
     <header class="sticky-header">
       <div class="event-bar">
@@ -173,24 +267,16 @@ function render(){
         <div class="refresh-area"><span id="sync-label" class="sync-label ${syncError?'offline':''}">${esc(syncText())}</span><button class="refresh-button" data-action="refresh" ${syncing?'disabled':''} aria-label="Actualizar información">${refreshIcon}<span>Actualizar</span></button></div>
       </div>
       <nav class="pool-tabs" aria-label="Filtrar fase o pool">
-        <button data-pool="all" class="${selectedPool==='all'?'selected':''}" ${selectedPool==='all'?'aria-current="page"':''}>Todas las pools</button>
-        ${state.pools.map(pool=>`<button data-pool="${esc(pool.id)}" class="${selectedPool===pool.id?'selected':''}" ${selectedPool===pool.id?'aria-current="page"':''}>${esc(poolTabName(pool))}</button>`).join('')}
+        <button data-pool="general" class="${selectedPool==='general'?'selected':''}" ${selectedPool==='general'?'aria-current="page"':''}>General</button>
+        ${pools.map(pool=>`<button data-pool="${esc(pool.id)}" class="${selectedPool===pool.id?'selected':''}" ${selectedPool===pool.id?'aria-current="page"':''}>${esc(poolTabName(pool))}</button>`).join('')}
       </nav>
     </header>
     <main>
       ${syncError?`<div class="warning" role="alert">No fue posible consultar información nueva. Se muestra la última actualización disponible.</div>`:''}
-      <section class="queue-section" aria-labelledby="queue-title">
-        <div class="section-heading"><div><span>ORDEN ACTUAL</span><h2 id="queue-title">${selectedPool==='all'?'Todas las partidas':esc(poolName(selectedPool))}</h2></div>
-          <div class="status-tabs" aria-label="Estado de partidas"><button data-tab="upcoming" class="${tab==='upcoming'?'selected':''}">En juego y próximas</button><button data-tab="completed" class="${tab==='completed'?'selected':''}">Finalizadas</button></div>
-        </div>
-        ${matchGroups()}
-      </section>
-      <section class="stations-section" aria-labelledby="stations-title">
-        <div class="section-heading"><div><span>ESTADO ACTUAL</span><h2 id="stations-title">Estaciones</h2></div><strong class="station-count">${stations.length}</strong></div>
-        <div class="station-grid">${stations.length?stations.map(stationCard).join(''):`<div class="empty"><strong>Sin estaciones para esta pool</strong></div>`}</div>
-      </section>
+      ${selectedPool==='general'?generalView():poolQueueView(stations)}
     </main>
     <footer>Datos del torneo actualizados automáticamente</footer>
+    ${rosterDialog()}
   </div>`;
 }
 
@@ -208,7 +294,7 @@ function updateTimers(){
   }
   for(const card of document.querySelectorAll('.station-card')){
     const number=Number(card.querySelector('.station-number strong')?.textContent);
-    const set=state?.sets.find(candidate=>stationNumber(candidate)===number&&['playing','called'].includes(candidate.status)&&(selectedPool==='all'||candidate.pool===selectedPool));
+    const set=state?.sets.find(candidate=>stationNumber(candidate)===number&&['playing','called'].includes(candidate.status)&&(selectedPool==='general'||candidate.pool===selectedPool));
     const label=card.querySelector('[data-station-elapsed]');
     if(set&&label){const time=elapsed(set);label.textContent=set.status==='called'?`Llamados hace ${time.text}`:`${time.text} en juego`;}
   }
@@ -237,9 +323,30 @@ async function refresh(manual=false){
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');
   if(!button||button.disabled)return;
-  if(button.dataset.pool){selectedPool=button.dataset.pool;render();return;}
+  if(button.dataset.pool){selectedPool=button.dataset.pool;tab='upcoming';rosterPool=null;rosterSearch='';render();return;}
+  if(button.dataset.goPool){selectedPool=button.dataset.goPool;tab='upcoming';render();window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(button.dataset.rosterPool){rosterPool=button.dataset.rosterPool;rosterSearch='';render();requestAnimationFrame(()=>document.querySelector('#roster-search')?.focus());return;}
+  if(button.dataset.action==='close-roster'){rosterPool=null;rosterSearch='';render();return;}
   if(button.dataset.tab){tab=button.dataset.tab;render();return;}
   if(button.dataset.action==='refresh')refresh(true);
+});
+
+document.addEventListener('click',event=>{
+  if(event.target.classList.contains('modal-backdrop')){
+    rosterPool=null;rosterSearch='';render();
+  }
+});
+
+document.addEventListener('input',event=>{
+  if(event.target.id!=='roster-search'||!rosterPool)return;
+  rosterSearch=event.target.value;
+  const pool=state?.pools.find(candidate=>candidate.id===rosterPool);
+  const results=document.querySelector('#roster-results');
+  if(pool&&results)results.innerHTML=rosterResults(pool);
+});
+
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&rosterPool){rosterPool=null;rosterSearch='';render();}
 });
 
 function resume(){if(!document.hidden)refresh();}
