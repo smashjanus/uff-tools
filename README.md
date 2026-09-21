@@ -1,6 +1,8 @@
 # Salamandra Queue
 
-Aplicación de organización de partidas de Super Smash Bros. Ultimate. Proyecto nuevo e independiente del sitio anterior.
+Guía pública del orden de partidas de Super Smash Bros. Ultimate. La página principal no pide iniciar sesión: muestra partidas en juego, llamados, próximas partidas, resultados y estaciones. La aplicación anterior se conserva en `previous_index.html`.
+
+La pestaña inicial **General** muestra la guía para jugadores y los horarios del Pool A y Pool B. Cada tarjeta permite abrir las partidas de esa pool o una lista de participantes con búsqueda. Los horarios públicos se editan en `poolSchedules` dentro de `config.js`.
 
 ## Abrir la aplicación local
 
@@ -13,6 +15,14 @@ node server.mjs
 ```
 
 Abre **http://127.0.0.1:4173**.
+
+### Abrir con Live Server en VS Code
+
+La carpeta incluye la configuración de Live Server y recomienda la extensión correspondiente. Abre `salamandra-queue` como carpeta en VS Code, haz clic derecho sobre `index.html` y selecciona **Open with Live Server**, o pulsa **Go Live** en la barra inferior. La página pública abrirá normalmente en `http://127.0.0.1:5500/` y usará el Web App configurado en `config.js`.
+
+Para revisar la aplicación anterior con ingreso de jugadores y administración, abre `previous_index.html` desde la misma dirección.
+
+El acceso con start.gg siempre vuelve a la dirección pública configurada en `STARTGG_REDIRECT_URI`. Para probar todo el flujo local de OAuth y las acciones administrativas en `127.0.0.1`, usa `node server.mjs` y el puerto `4173`.
 
 - **Iniciar sesión con start.gg** usa OAuth real cuando `.env` contiene la configuración requerida.
 - **Entrar como invitado** permite ver y buscar el orden general sin una cuenta.
@@ -56,9 +66,11 @@ Publica el contenido de `dist/`. El proyecto usa rutas relativas y funciona dent
 
 **Sin backend configurado, GitHub Pages ejecuta una demo de este dispositivo:** guarda el torneo en localStorage, comparte cambios entre pestañas del mismo navegador mediante BroadcastChannel y usa bloqueos del navegador cuando están disponibles. No sincroniza teléfonos diferentes. Esta limitación se indica en pantalla.
 
-Para servir un estado compartido desde GitHub Pages, hace falta alojar `server.mjs` por HTTPS y configurar `apiBase` en `config.js`, `FRONTEND_ORIGIN` en el servidor y el callback HTTPS en start.gg. Las cookies entre sitios pueden ser restringidas por algunos navegadores; se recomienda servir web y API bajo el mismo sitio. El arranque local usa `/api`.
+Para la publicación gratuita se incluye `Code.gs`, que convierte Google Apps Script en el backend compartido. Los secretos se guardan en Script Properties y `config.js` contiene únicamente la URL pública terminada en `/exec`. La guía completa está en `docs/GOOGLE-APPS-SCRIPT.md`.
 
-El compilado contiene únicamente archivos públicos. No incluye el servidor, datos, sesiones ni secretos. Por eso `dist/` sirve para una vista estática, pero las acciones reales requieren el servidor. La lista exacta de archivos y variables está en `docs/DEPLOYMENT.md`.
+En producción, GitHub Pages consulta Apps Script cada 30 segundos, al recuperar foco y al pulsar **Actualizar**. Apps Script centraliza la consulta a start.gg, conserva sesiones y valida las acciones administrativas. El arranque local continúa usando `server.mjs` mediante `/api`.
+
+El compilado contiene únicamente archivos públicos. No incluye datos, sesiones ni secretos. Las acciones reales requieren configurar la URL de Apps Script. La lista exacta de archivos y variables está en `docs/DEPLOYMENT.md`.
 
 ## Qué significa la fila
 
