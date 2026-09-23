@@ -7,13 +7,14 @@ async function mapLimited(values,limit,work){
   await Promise.all(Array.from({length:Math.min(limit,values.length)},worker));return results;
 }
 export function importEvent(event,phases,now=Date.now()){
-  const state={schema:1,version:now,name:`${event.slug.split('/')[1]} · ${event.name}`,eventName:event.name,subtitle:event.typeDisplayStr||event.name,provider:'start.gg',readOnly:true,eventId:id(event.id),tournamentId:id(event.tournamentId),createdAt:ms(event.createdAt)||0,updatedAt:now,pools:[],players:[],sets:[],stations:[],log:[],preview:false};
+  const state={schema:1,version:now,name:`${event.slug.split('/')[1]} · ${event.name}`,eventName:event.name,eventSlug:event.slug,subtitle:event.typeDisplayStr||event.name,provider:'start.gg',readOnly:true,eventId:id(event.id),tournamentId:id(event.tournamentId),createdAt:ms(event.createdAt)||0,updatedAt:now,pools:[],players:[],sets:[],stations:[],log:[],preview:false};
   const players=new Map();
   for(const {phase,groups} of phases)for(const data of groups){
     const g=data.groups,pool=id(g.id),entrants=data.entrants||[];
     if(!g||!Array.isArray(data.sets)||!Array.isArray(entrants))throw Error('Respuesta de bracket incompleta.');
     if(!entrants.length&&!data.sets.length)continue;
-    state.pools.push({id:pool,name:`${phase.name} · Pool ${g.displayIdentifier||g.identifier}`,count:entrants.length,qualifiers:g.numProgressing});
+    const phaseId=id(phase.id),eventPath=String(event.slug||'').replace(/^\/+/,''),startggUrl=eventPath&&phaseId?`https://www.start.gg/${eventPath}/brackets/${phaseId}/${pool}`:null;
+    state.pools.push({id:pool,phaseId,name:`${phase.name} · Pool ${g.displayIdentifier||g.identifier}`,count:entrants.length,qualifiers:g.numProgressing,startggUrl});
     for(const e of entrants){const entrantId=id(e.id),existing=players.get(entrantId);if(existing){if(!existing.pools.includes(pool))existing.pools.push(pool);}else players.set(entrantId,{id:entrantId,name:e.name,pool,pools:[pool],seed:e.initialSeedNum||0,startggPlayerIds:Object.values(e.playerIds||{}).map(String)});}
     for(const [index,s] of data.sets.entries()){
       if(s.unreachable)continue;
