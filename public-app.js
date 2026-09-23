@@ -6,10 +6,17 @@ const app=document.querySelector('#app');
 const notice=document.querySelector('#notice');
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const refreshIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg>`;
+const VIEW_KEY='salamandra.public.view.v1';
 
+function savedView(){
+  try{return JSON.parse(localStorage.getItem(VIEW_KEY))||{};}catch{return {};}
+}
+
+const initialView=savedView();
 let state=null;
-let selectedPool='general';
-let tab='upcoming';
+let selectedPool=initialView.pool||'general';
+let tab=['upcoming','completed'].includes(initialView.tab)?initialView.tab:'upcoming';
+let restoredEventId=initialView.eventId||null;
 let entries=[];
 let lastSync=0;
 let syncing=false;
@@ -17,6 +24,12 @@ let syncError='';
 let refreshTimer=null;
 let rosterPool=null;
 let rosterSearch='';
+
+function rememberView(){
+  const eventId=state?.eventId||restoredEventId||null;
+  restoredEventId=eventId;
+  try{localStorage.setItem(VIEW_KEY,JSON.stringify({eventId,pool:selectedPool,tab}));}catch{}
+}
 
 const eventTitle=()=>state?.eventName||state?.name?.split(' · ').at(-1)||'Salamandra Queue';
 const poolName=id=>state?.pools.find(pool=>pool.id===id)?.name||id;
@@ -48,6 +61,13 @@ function poolTabName(pool){
   if(code==='A'||code==='B')return `Pool ${code}`;
   const parts=pool.name.split('·').map(part=>part.trim()).filter(Boolean);
   return parts.at(-1)||pool.name;
+}
+
+function poolStartggUrl(pool){
+  const supplied=String(pool?.startggUrl||'');
+  if(supplied.startsWith('https://www.start.gg/'))return supplied;
+  const eventPath=String(state?.eventSlug||'').replace(/^\/+/,''),phaseId=pool?.phaseId;
+  return eventPath&&phaseId?`https://www.start.gg/${eventPath}/brackets/${phaseId}/${pool.id}`:'';
 }
 
 function poolPlayers(poolId){
@@ -237,8 +257,9 @@ function stationCard(station){
 
 function poolQueueView(stations){
   const pool=state.pools.find(candidate=>candidate.id===selectedPool);
+  const startggUrl=poolStartggUrl(pool);
   return `<section class="queue-section" aria-labelledby="queue-title">
-      <div class="section-heading"><div><span>ORDEN ACTUAL</span><h2 id="queue-title">${esc(pool?poolTabName(pool):poolName(selectedPool))}</h2></div>
+      <div class="section-heading"><div><span>ORDEN ACTUAL</span><div class="pool-title-line"><h2 id="queue-title">${esc(pool?poolTabName(pool):poolName(selectedPool))}</h2>${startggUrl?`<a class="startgg-link" href="${esc(startggUrl)}" target="_blank" rel="noopener noreferrer">Ver en start.gg <span aria-hidden="true">↗</span></a>`:''}</div></div>
         <div class="status-tabs" aria-label="Estado de partidas"><button data-tab="upcoming" class="${tab==='upcoming'?'selected':''}">En juego y próximas</button><button data-tab="completed" class="${tab==='completed'?'selected':''}">Finalizadas</button></div>
       </div>
       ${matchGroups()}
@@ -254,7 +275,10 @@ function render(){
     app.innerHTML=`<main class="boot-screen"><img src="./logo.jpeg" alt="Salamandra" width="54" height="54"><p>${esc(syncError||'Consultando el orden de partidas…')}</p>${syncError?`<button class="refresh-button" data-action="refresh">${refreshIcon}<span>Volver a intentar</span></button>`:''}</main>`;
     return;
   }
-  if(selectedPool!=='general'&&!state.pools.some(pool=>pool.id===selectedPool))selectedPool='general';
+  let viewChanged=false;
+  if(restoredEventId&&String(restoredEventId)!==String(state.eventId)){selectedPool='general';tab='upcoming';viewChanged=true;}
+  if(selectedPool!=='general'&&!state.pools.some(pool=>pool.id===selectedPool)){selectedPool='general';tab='upcoming';viewChanged=true;}
+  if(viewChanged)rememberView();
   if(rosterPool&&!state.pools.some(pool=>pool.id===rosterPool)){rosterPool=null;rosterSearch='';}
   entries=schedule(state);
   const pools=orderedPools();
@@ -323,11 +347,11 @@ async function refresh(manual=false){
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');
   if(!button||button.disabled)return;
-  if(button.dataset.pool){selectedPool=button.dataset.pool;tab='upcoming';rosterPool=null;rosterSearch='';render();return;}
-  if(button.dataset.goPool){selectedPool=button.dataset.goPool;tab='upcoming';render();window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(button.dataset.pool){selectedPool=button.dataset.pool;tab='upcoming';rosterPool=null;rosterSearch='';rememberView();render();return;}
+  if(button.dataset.goPool){selectedPool=button.dataset.goPool;tab='upcoming';rememberView();render();window.scrollTo({top:0,behavior:'smooth'});return;}
   if(button.dataset.rosterPool){rosterPool=button.dataset.rosterPool;rosterSearch='';render();requestAnimationFrame(()=>document.querySelector('#roster-search')?.focus());return;}
   if(button.dataset.action==='close-roster'){rosterPool=null;rosterSearch='';render();return;}
-  if(button.dataset.tab){tab=button.dataset.tab;render();return;}
+  if(button.dataset.tab){tab=button.dataset.tab;rememberView();render();return;}
   if(button.dataset.action==='refresh')refresh(true);
 });
 
@@ -360,3 +384,14 @@ setInterval(()=>{if(!document.hidden)refresh();},CONFIG.refreshMs);
 setInterval(()=>{if(!document.hidden)updateTimers();},1000);
 
 await refresh();
+
+function scheduleFullReload(delay=Number(CONFIG.fullReloadMs)||0){
+  if(delay<=0)return;
+  setTimeout(()=>{
+    if(document.hidden||rosterPool||syncing){scheduleFullReload(30000);return;}
+    rememberView();
+    location.reload();
+  },delay);
+}
+
+scheduleFullReload();
