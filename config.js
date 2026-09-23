@@ -9,6 +9,7 @@ export const CONFIG = {
   backend: appsScript ? 'apps-script' : 'demo',
   apiBase: appsScript ? APPS_SCRIPT_URL.trim() : '',
   refreshMs: 30000,
+  fullReloadMs: 120000,
   oauthEnabled: appsScript,
   poolSchedules: {
     A: { date: '26 de septiembre de 2026', time: '10:00–10:15 a. m.' },
