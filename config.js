@@ -13,6 +13,6 @@ export const CONFIG = {
   oauthEnabled: appsScript,
   poolSchedules: {
     A: { date: '26 de septiembre de 2026', time: '09:30–9:45 a. m.' },
-    B: { date: '26 de septiembre de 2026', time: '12:00–12:15 p. m.' },
+    B: { date: '26 de septiembre de 2026', time: '01:15–01:30 p. m.' },
   },
 };
