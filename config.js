@@ -12,7 +12,7 @@ export const CONFIG = {
   fullReloadMs: 120000,
   oauthEnabled: appsScript,
   poolSchedules: {
-    A: { date: '26 de septiembre de 2026', time: '10:00–10:15 a. m.' },
+    A: { date: '26 de septiembre de 2026', time: '09:30–9:45 a. m.' },
     B: { date: '26 de septiembre de 2026', time: '12:00–12:15 p. m.' },
   },
 };
